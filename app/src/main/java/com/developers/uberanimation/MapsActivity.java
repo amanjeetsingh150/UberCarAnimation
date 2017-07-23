@@ -151,7 +151,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                         if (index < polyLineList.size() - 1) {
                                             index++;
                                             next = index + 1;
-                                            Log.d(TAG, index + " <-ind " + " next->" + next);
                                         }
                                         if (index < polyLineList.size() - 1) {
                                             startPosition = polyLineList.get(index);
