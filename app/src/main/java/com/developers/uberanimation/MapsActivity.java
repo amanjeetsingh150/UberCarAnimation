@@ -103,8 +103,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .bearing(30)
                 .tilt(45)
                 .build()));
-        marker = mMap.addMarker(new MarkerOptions().position(sydney)
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_car)));
         String requestUrl = null;
         try {
             requestUrl = "https://maps.googleapis.com/maps/api/directions/json?" +
