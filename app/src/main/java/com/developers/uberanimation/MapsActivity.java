@@ -175,7 +175,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                                                         .target(newPos)
                                                                         .zoom(15.5f)
                                                                         .build()));
-                                                Log.d(TAG, "Coming: " + newPos);
                                             }
                                         });
                                         valueAnimator.start();
