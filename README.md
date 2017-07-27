@@ -79,3 +79,14 @@ mMap.moveCamera(CameraUpdateFactory
 </pre>
 </LI>
 </UL>
+
+
+<br><br>
+# Running the project
+The application uses <b>Google Maps Api Key</b> and <b>Google Map Directions key</b>. Get these api key on google developers console after enabling them for your project. Replace your google maps directions api key in <a href="https://github.com/amanjeetsingh150/UberCarAnimation/blob/master/app/src/main/res/values/strings.xml">strings.xml</a> and google maps key in <a href="https://github.com/amanjeetsingh150/UberCarAnimation/blob/master/app/src/debug/res/values/google_maps_api.xml">google_maps_api.xml. For convenience a TODO has been added there just follow them.
+
+<br><br>
+# Developers
+<UL>
+<LI><a href="https://github.com/amanjeetsingh150">Amanjeet Singh</a>
+</UL>
