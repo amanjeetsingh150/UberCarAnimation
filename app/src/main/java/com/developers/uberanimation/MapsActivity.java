@@ -1,5 +1,6 @@
 package com.developers.uberanimation;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.graphics.Color;
 import android.os.Handler;
@@ -27,6 +28,9 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.SquareCap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -50,6 +54,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Button button;
     private EditText destinationEditText;
     private String destination;
+    private PolylineOptions polylineOptions;
+    private Polyline bluePolyline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,16 +133,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     polyLineList = decodePoly(polyline);
                                     Log.d(TAG, polyLineList + "");
                                 }
-                                for (LatLng latLng : polyLineList) {
-                                    mMap.addCircle(new CircleOptions()
-                                            .center(latLng)
-                                            .radius(4)
-                                            .visible(true)
-                                            .clickable(false)
-                                            .fillColor(Color.CYAN)
-                                            .strokeColor(Color.BLUE)
-                                            .strokeWidth(4));
-                                }
+                                polylineOptions = new PolylineOptions();
+                                polylineOptions.color(Color.BLUE);
+                                polylineOptions.width(3);
+                                polylineOptions.endCap(new SquareCap());
+                                polylineOptions.addAll(polyLineList);
+                                mMap.addPolyline(polylineOptions);
+                                mMap.addMarker(new MarkerOptions()
+                                        .position(polyLineList.get(polyLineList.size() - 1)));
                                 marker = mMap.addMarker(new MarkerOptions().position(sydney)
                                         .flat(true)
                                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_car)));
