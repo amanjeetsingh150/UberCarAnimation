@@ -176,12 +176,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     public void onAnimationUpdate(ValueAnimator valueAnimator) {
                                         List<LatLng> points = greyPolyLine.getPoints();
                                         int percentValue = (int) valueAnimator.getAnimatedValue();
-                                        Log.d(TAG, "VAL: " + percentValue);
                                         int size = points.size();
-                                        int r = (int) (size * (percentValue / 100.0f));
-                                        Log.d(TAG, "R VAL: " + r);
-                                        List<LatLng> p = points.subList(0, r);
-                                        Log.d(TAG, p + "");
+                                        int newPoints = (int) (size * (percentValue / 100.0f));
+                                        List<LatLng> p = points.subList(0, newPoints);
                                         blackPolyline.setPoints(p);
                                     }
                                 });
