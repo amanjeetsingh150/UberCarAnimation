@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,6 +19,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -26,6 +28,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -34,9 +37,12 @@ import com.google.android.gms.maps.model.SquareCap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.w3c.dom.ls.LSException;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.google.android.gms.maps.model.JointType.ROUND;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -54,8 +60,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Button button;
     private EditText destinationEditText;
     private String destination;
-    private PolylineOptions polylineOptions;
-    private Polyline bluePolyline;
+    private PolylineOptions polylineOptions, blackPolylineOptions;
+    private Polyline blackPolyline, greyPolyLine;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,14 +139,53 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     polyLineList = decodePoly(polyline);
                                     Log.d(TAG, polyLineList + "");
                                 }
+                                //Adjusting bounds
+                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                                for (LatLng latLng : polyLineList) {
+                                    builder.include(latLng);
+                                }
+                                LatLngBounds bounds = builder.build();
+                                CameraUpdate mCameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 2);
+                                mMap.animateCamera(mCameraUpdate);
+
                                 polylineOptions = new PolylineOptions();
-                                polylineOptions.color(Color.BLUE);
-                                polylineOptions.width(3);
+                                polylineOptions.color(Color.GRAY);
+                                polylineOptions.width(5);
+                                polylineOptions.startCap(new SquareCap());
                                 polylineOptions.endCap(new SquareCap());
+                                polylineOptions.jointType(ROUND);
                                 polylineOptions.addAll(polyLineList);
-                                mMap.addPolyline(polylineOptions);
+                                greyPolyLine = mMap.addPolyline(polylineOptions);
+
+                                blackPolylineOptions = new PolylineOptions();
+                                blackPolylineOptions.width(5);
+                                blackPolylineOptions.color(Color.BLACK);
+                                blackPolylineOptions.startCap(new SquareCap());
+                                blackPolylineOptions.endCap(new SquareCap());
+                                blackPolylineOptions.jointType(ROUND);
+                                blackPolyline = mMap.addPolyline(blackPolylineOptions);
+
                                 mMap.addMarker(new MarkerOptions()
                                         .position(polyLineList.get(polyLineList.size() - 1)));
+
+                                ValueAnimator polylineAnimator = ValueAnimator.ofInt(0, 100);
+                                polylineAnimator.setDuration(2000);
+                                polylineAnimator.setInterpolator(new LinearInterpolator());
+                                polylineAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                                    @Override
+                                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                                        List<LatLng> points = greyPolyLine.getPoints();
+                                        int percentValue = (int) valueAnimator.getAnimatedValue();
+                                        Log.d(TAG, "VAL: " + percentValue);
+                                        int size = points.size();
+                                        int r = (int) (size * (percentValue / 100.0f));
+                                        Log.d(TAG, "R VAL: " + r);
+                                        List<LatLng> p = points.subList(0, r);
+                                        Log.d(TAG, p + "");
+                                        blackPolyline.setPoints(p);
+                                    }
+                                });
+                                polylineAnimator.start();
                                 marker = mMap.addMarker(new MarkerOptions().position(sydney)
                                         .flat(true)
                                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_car)));
