@@ -2,7 +2,7 @@
 A demo application which demonstrates movement of car on map developed after inspiration from Uber.
 <br><br>
 # Demo
-<img src="https://user-images.githubusercontent.com/12881364/28501711-4163c2ea-6fff-11e7-8fa2-8cb63f072d89.gif" height=400/>
+<img src="https://user-images.githubusercontent.com/12881364/29244386-7f164cd6-7fd4-11e7-9d1a-13af7ee237ba.gif"/>
 <br>
 Youtube Link: https://www.youtube.com/watch?v=JIs4kLZ8qQI
 <br><br>
@@ -85,7 +85,12 @@ mMap.moveCamera(CameraUpdateFactory
 # Running the project
 The application uses <b>Google Maps Api Key</b> and <b>Google Map Directions key</b>. Get these api key on google developers console after enabling them for your project. Replace your google maps directions api key in <a href="https://github.com/amanjeetsingh150/UberCarAnimation/blob/master/app/src/main/res/values/strings.xml">strings.xml</a> and google maps key in <a href="https://github.com/amanjeetsingh150/UberCarAnimation/blob/master/app/src/debug/res/values/google_maps_api.xml">google_maps_api.xml</a>. For convenience a TODO has been added there just follow them.
 <br><br>
+
 # Developers
 <UL>
 <LI><a href="https://github.com/amanjeetsingh150">Amanjeet Singh</a>
 </UL>
+<blockquote>
+If you found this code demo helpful or you learned something today and want to thank me, consider buying me a cup of :coffee: at
+<a href="https://www.paypal.me/amanjeetsingh150">PayPal</a>
+</blockquote>
