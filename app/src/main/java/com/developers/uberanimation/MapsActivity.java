@@ -19,6 +19,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.developers.uberanimation.models.Result;
+import com.developers.uberanimation.models.Route;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -42,6 +44,14 @@ import org.w3c.dom.ls.LSException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 import static com.google.android.gms.maps.model.JointType.ROUND;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -62,6 +72,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private String destination;
     private PolylineOptions polylineOptions, blackPolylineOptions;
     private Polyline blackPolyline, greyPolyLine;
+    private ApiInterface apiInterface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,8 +82,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         polyLineList = new ArrayList<>();
-        button = (Button) findViewById(R.id.destination_button);
-        destinationEditText = (EditText) findViewById(R.id.edittext_place);
+        button = findViewById(R.id.destination_button);
+        destinationEditText = findViewById(R.id.edittext_place);
+        Retrofit retrofit = new Retrofit.Builder()
+                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .baseUrl("https://maps.googleapis.com/")
+                .build();
+        apiInterface = retrofit.create(ApiInterface.class);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -82,12 +99,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mapFragment.getMapAsync(MapsActivity.this);
             }
         });
-
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
 
     }
 
@@ -122,137 +133,129 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .bearing(30)
                 .tilt(45)
                 .build()));
-        String requestUrl = null;
-        try {
-            requestUrl = "https://maps.googleapis.com/maps/api/directions/json?" +
-                    "mode=driving&"
-                    + "transit_routing_preference=less_driving&"
-                    + "origin=" + latitude + "," + longitude + "&"
-                    + "destination=" + destination + "&"
-                    + "key=" + getResources().getString(R.string.google_directions_key);
-            Log.d(TAG, requestUrl);
-            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
-                    requestUrl, null,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            Log.d(TAG, response + "");
-                            try {
-                                JSONArray jsonArray = response.getJSONArray("routes");
-                                for (int i = 0; i < jsonArray.length(); i++) {
-                                    JSONObject route = jsonArray.getJSONObject(i);
-                                    JSONObject poly = route.getJSONObject("overview_polyline");
-                                    String polyline = poly.getString("points");
-                                    polyLineList = decodePoly(polyline);
-                                    Log.d(TAG, polyLineList + "");
-                                }
-                                //Adjusting bounds
-                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                                for (LatLng latLng : polyLineList) {
-                                    builder.include(latLng);
-                                }
-                                LatLngBounds bounds = builder.build();
-                                CameraUpdate mCameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 2);
-                                mMap.animateCamera(mCameraUpdate);
 
-                                polylineOptions = new PolylineOptions();
-                                polylineOptions.color(Color.GRAY);
-                                polylineOptions.width(5);
-                                polylineOptions.startCap(new SquareCap());
-                                polylineOptions.endCap(new SquareCap());
-                                polylineOptions.jointType(ROUND);
-                                polylineOptions.addAll(polyLineList);
-                                greyPolyLine = mMap.addPolyline(polylineOptions);
+        apiInterface.getDirections("driving", "less_driving",
+                latitude + "," + longitude, destination,
+                getResources().getString(R.string.google_directions_key))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        new SingleObserver<Result>() {
 
-                                blackPolylineOptions = new PolylineOptions();
-                                blackPolylineOptions.width(5);
-                                blackPolylineOptions.color(Color.BLACK);
-                                blackPolylineOptions.startCap(new SquareCap());
-                                blackPolylineOptions.endCap(new SquareCap());
-                                blackPolylineOptions.jointType(ROUND);
-                                blackPolyline = mMap.addPolyline(blackPolylineOptions);
-
-                                mMap.addMarker(new MarkerOptions()
-                                        .position(polyLineList.get(polyLineList.size() - 1)));
-
-                                ValueAnimator polylineAnimator = ValueAnimator.ofInt(0, 100);
-                                polylineAnimator.setDuration(2000);
-                                polylineAnimator.setInterpolator(new LinearInterpolator());
-                                polylineAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                                    @Override
-                                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                                        List<LatLng> points = greyPolyLine.getPoints();
-                                        int percentValue = (int) valueAnimator.getAnimatedValue();
-                                        int size = points.size();
-                                        int newPoints = (int) (size * (percentValue / 100.0f));
-                                        List<LatLng> p = points.subList(0, newPoints);
-                                        blackPolyline.setPoints(p);
-                                    }
-                                });
-                                polylineAnimator.start();
-                                marker = mMap.addMarker(new MarkerOptions().position(sydney)
-                                        .flat(true)
-                                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_car)));
-                                handler = new Handler();
-                                index = -1;
-                                next = 1;
-                                handler.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (index < polyLineList.size() - 1) {
-                                            index++;
-                                            next = index + 1;
-                                        }
-                                        if (index < polyLineList.size() - 1) {
-                                            startPosition = polyLineList.get(index);
-                                            endPosition = polyLineList.get(next);
-                                        }
-                                        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
-                                        valueAnimator.setDuration(3000);
-                                        valueAnimator.setInterpolator(new LinearInterpolator());
-                                        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                                            @Override
-                                            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                                                v = valueAnimator.getAnimatedFraction();
-                                                lng = v * endPosition.longitude + (1 - v)
-                                                        * startPosition.longitude;
-                                                lat = v * endPosition.latitude + (1 - v)
-                                                        * startPosition.latitude;
-                                                LatLng newPos = new LatLng(lat, lng);
-                                                marker.setPosition(newPos);
-                                                marker.setAnchor(0.5f, 0.5f);
-                                                marker.setRotation(getBearing(startPosition, newPos));
-                                                mMap.animateCamera(CameraUpdateFactory
-                                                        .newCameraPosition
-                                                                (new CameraPosition.Builder()
-                                                                        .target(newPos)
-                                                                        .zoom(15.5f)
-                                                                        .build()));
-                                            }
-                                        });
-                                        valueAnimator.start();
-                                        handler.postDelayed(this, 3000);
-                                    }
-                                }, 3000);
+                            @Override
+                            public void onSubscribe(Disposable d) {
 
 
-                            } catch (Exception e) {
-                                e.printStackTrace();
                             }
 
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Log.d(TAG, error + "");
-                }
-            });
-            RequestQueue requestQueue = Volley.newRequestQueue(this);
-            requestQueue.add(jsonObjectRequest);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                            @Override
+                            public void onSuccess(Result result) {
+                                List<Route> routeList = result.getRoutes();
+                                for (Route route : routeList) {
+                                    String polyLine = route.getOverviewPolyline().getPoints();
+                                    polyLineList = decodePoly(polyLine);
+                                    drawPolyLineAndAnimateCar();
+                                }
 
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                e.printStackTrace();
+                            }
+                        });
+    }
+
+
+    private void drawPolyLineAndAnimateCar() {
+        //Adjusting bounds
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for (LatLng latLng : polyLineList) {
+            builder.include(latLng);
+        }
+        LatLngBounds bounds = builder.build();
+        CameraUpdate mCameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 2);
+        mMap.animateCamera(mCameraUpdate);
+
+        polylineOptions = new PolylineOptions();
+        polylineOptions.color(Color.GRAY);
+        polylineOptions.width(5);
+        polylineOptions.startCap(new SquareCap());
+        polylineOptions.endCap(new SquareCap());
+        polylineOptions.jointType(ROUND);
+        polylineOptions.addAll(polyLineList);
+        greyPolyLine = mMap.addPolyline(polylineOptions);
+
+        blackPolylineOptions = new PolylineOptions();
+        blackPolylineOptions.width(5);
+        blackPolylineOptions.color(Color.BLACK);
+        blackPolylineOptions.startCap(new SquareCap());
+        blackPolylineOptions.endCap(new SquareCap());
+        blackPolylineOptions.jointType(ROUND);
+        blackPolyline = mMap.addPolyline(blackPolylineOptions);
+
+        mMap.addMarker(new MarkerOptions()
+                .position(polyLineList.get(polyLineList.size() - 1)));
+
+        ValueAnimator polylineAnimator = ValueAnimator.ofInt(0, 100);
+        polylineAnimator.setDuration(2000);
+        polylineAnimator.setInterpolator(new LinearInterpolator());
+        polylineAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                List<LatLng> points = greyPolyLine.getPoints();
+                int percentValue = (int) valueAnimator.getAnimatedValue();
+                int size = points.size();
+                int newPoints = (int) (size * (percentValue / 100.0f));
+                List<LatLng> p = points.subList(0, newPoints);
+                blackPolyline.setPoints(p);
+            }
+        });
+        polylineAnimator.start();
+        marker = mMap.addMarker(new MarkerOptions().position(sydney)
+                .flat(true)
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_car)));
+        handler = new Handler();
+        index = -1;
+        next = 1;
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (index < polyLineList.size() - 1) {
+                    index++;
+                    next = index + 1;
+                }
+                if (index < polyLineList.size() - 1) {
+                    startPosition = polyLineList.get(index);
+                    endPosition = polyLineList.get(next);
+                }
+                ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
+                valueAnimator.setDuration(3000);
+                valueAnimator.setInterpolator(new LinearInterpolator());
+                valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                        v = valueAnimator.getAnimatedFraction();
+                        lng = v * endPosition.longitude + (1 - v)
+                                * startPosition.longitude;
+                        lat = v * endPosition.latitude + (1 - v)
+                                * startPosition.latitude;
+                        LatLng newPos = new LatLng(lat, lng);
+                        marker.setPosition(newPos);
+                        marker.setAnchor(0.5f, 0.5f);
+                        marker.setRotation(getBearing(startPosition, newPos));
+                        mMap.animateCamera(CameraUpdateFactory
+                                .newCameraPosition
+                                        (new CameraPosition.Builder()
+                                                .target(newPos)
+                                                .zoom(15.5f)
+                                                .build()));
+                    }
+                });
+                valueAnimator.start();
+                handler.postDelayed(this, 3000);
+            }
+        }, 3000);
     }
 
 
