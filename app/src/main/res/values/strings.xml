@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">UberAnimation</string>
     <string name="title_activity_maps">UberAnimation</string>
-    <!-- TODO:Add your Google Maps Directions API key here in the value of name google_directions_key-->
     <string name="google_directions_key">Your directions key here</string>
+    <string name="enter_source_place_text">Enter Source Place</string>
+    <string name="enter_destination_place_text">Enter Destination Place</string>
+    <string name="button_text">GO</string>
+    <string name="empty_error">Fields cannot be empty</string>
+    <string name="internet_error">No Internet Connection!!</string>
 </resources>
+

@@ -85,6 +85,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+    }
 
     /**
      * Manipulates the map once available.
@@ -105,6 +110,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setIndoorEnabled(false);
         mMap.setBuildingsEnabled(false);
         mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setAllGesturesEnabled(true);
+        mMap.getUiSettings().setZoomGesturesEnabled(true);
         // Add a marker in Home and move the camera
         sydney = new LatLng(28.671246, 77.317654);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Home"));
@@ -215,7 +222,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                                 marker.setPosition(newPos);
                                                 marker.setAnchor(0.5f, 0.5f);
                                                 marker.setRotation(getBearing(startPosition, newPos));
-                                                mMap.moveCamera(CameraUpdateFactory
+                                                mMap.animateCamera(CameraUpdateFactory
                                                         .newCameraPosition
                                                                 (new CameraPosition.Builder()
                                                                         .target(newPos)
