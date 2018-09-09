@@ -1,8 +1,10 @@
 package com.developers.uberanimation;
 
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Handler;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,8 +12,14 @@ import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+
 import com.developers.uberanimation.models.Result;
 import com.developers.uberanimation.models.Route;
+import com.developers.uberanimation.models.events.BeginJourneyEvent;
+import com.developers.uberanimation.models.events.CurrentJourneyEvent;
+import com.developers.uberanimation.models.events.EndJourneyEvent;
+import com.developers.uberanimation.utils.JourneyEventBus;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -26,11 +34,15 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.SquareCap;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import io.reactivex.Observer;
 import io.reactivex.SingleObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
@@ -54,9 +66,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Button button;
     private EditText destinationEditText;
     private String destination;
+    private LinearLayout linearLayout;
     private PolylineOptions polylineOptions, blackPolylineOptions;
     private Polyline blackPolyline, greyPolyLine;
     private ApiInterface apiInterface;
+    private Disposable disposable;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +80,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        linearLayout = findViewById(R.id.linearLayout);
         polyLineList = new ArrayList<>();
         button = findViewById(R.id.destination_button);
         destinationEditText = findViewById(R.id.edittext_place);
@@ -83,7 +99,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mapFragment.getMapAsync(MapsActivity.this);
             }
         });
-
     }
 
     /**
@@ -117,7 +132,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .bearing(30)
                 .tilt(45)
                 .build()));
-
         apiInterface.getDirections("driving", "less_driving",
                 latitude + "," + longitude, destination,
                 getResources().getString(R.string.google_directions_key))
@@ -125,7 +139,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         new SingleObserver<Result>() {
-
                             @Override
                             public void onSubscribe(Disposable d) {
 
@@ -139,7 +152,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     polyLineList = decodePoly(polyLine);
                                     drawPolyLineAndAnimateCar();
                                 }
-
                             }
 
                             @Override
@@ -149,6 +161,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //This is an event bus for receiving journey events this can be shifted anywhere
+        //in code.
+        //Do remember to dispose when not in use. For eg. its necessary to dispose it in
+        //onStop as activity is not visible.
+        disposable = JourneyEventBus.getInstance().getOnJourneyEvent()
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Object>() {
+                    @Override
+                    public void accept(Object o) throws Exception {
+                        if (o instanceof BeginJourneyEvent) {
+                            Snackbar.make(linearLayout, "Journey has started",
+                                    Snackbar.LENGTH_SHORT).show();
+                        } else if (o instanceof EndJourneyEvent) {
+                            Snackbar.make(linearLayout, "Journey has ended",
+                                    Snackbar.LENGTH_SHORT).show();
+                        } else if(o instanceof CurrentJourneyEvent){
+                            /*
+                             * This can be used to receive the current location update of the car
+                             */
+                            //Log.d(TAG,"Current "+((CurrentJourneyEvent) o).getCurrentLatLng());
+                        }
+                    }
+                });
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (!disposable.isDisposed()) {
+            disposable.dispose();
+        }
+    }
 
     private void drawPolyLineAndAnimateCar() {
         //Adjusting bounds
@@ -212,6 +259,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     startPosition = polyLineList.get(index);
                     endPosition = polyLineList.get(next);
                 }
+                if (index == 0) {
+                    BeginJourneyEvent beginJourneyEvent = new BeginJourneyEvent();
+                    beginJourneyEvent.setBeginLatLng(startPosition);
+                    JourneyEventBus.getInstance().setOnJourneyBegin(beginJourneyEvent);
+                }
+                if (index == polyLineList.size() - 1) {
+                    EndJourneyEvent endJourneyEvent = new EndJourneyEvent();
+                    endJourneyEvent.setEndJourneyLatLng(new LatLng(polyLineList.get(index).latitude,
+                            polyLineList.get(index).longitude));
+                    JourneyEventBus.getInstance().setOnJourneyEnd(endJourneyEvent);
+                }
                 ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
                 valueAnimator.setDuration(3000);
                 valueAnimator.setInterpolator(new LinearInterpolator());
@@ -224,19 +282,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         lat = v * endPosition.latitude + (1 - v)
                                 * startPosition.latitude;
                         LatLng newPos = new LatLng(lat, lng);
+                        CurrentJourneyEvent currentJourneyEvent = new CurrentJourneyEvent();
+                        currentJourneyEvent.setCurrentLatLng(newPos);
+                        JourneyEventBus.getInstance().setOnJourneyUpdate(currentJourneyEvent);
                         marker.setPosition(newPos);
                         marker.setAnchor(0.5f, 0.5f);
                         marker.setRotation(getBearing(startPosition, newPos));
-                        mMap.animateCamera(CameraUpdateFactory
-                                .newCameraPosition
-                                        (new CameraPosition.Builder()
-                                                .target(newPos)
-                                                .zoom(15.5f)
-                                                .build()));
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition
+                                (new CameraPosition.Builder().target(newPos)
+                                        .zoom(15.5f).build()));
                     }
                 });
                 valueAnimator.start();
-                handler.postDelayed(this, 3000);
+                if (index != polyLineList.size() - 1) {
+                    handler.postDelayed(this, 3000);
+                }
             }
         }, 3000);
     }
