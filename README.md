@@ -2,7 +2,7 @@
 A demo application which demonstrates movement of car on map developed after inspiration from Uber.
 <br><br>
 # Demo
-<img src="https://user-images.githubusercontent.com/12881364/29244386-7f164cd6-7fd4-11e7-9d1a-13af7ee237ba.gif"/>&nbsp; &nbsp;<img scrc="https://user-images.githubusercontent.com/12881364/45456295-d4f0b900-b707-11e8-8067-e1adb9c98716.gif"/>
+<img src="https://user-images.githubusercontent.com/12881364/29244386-7f164cd6-7fd4-11e7-9d1a-13af7ee237ba.gif"/>
 <br>
 Youtube Link: https://www.youtube.com/watch?v=JIs4kLZ8qQI
 <br><br>
@@ -85,6 +85,12 @@ mMap.moveCamera(CameraUpdateFactory
 # Running the project
 The application uses <b>Google Maps Api Key</b> and <b>Google Map Directions key</b>. Get these api key on google developers console after enabling them for your project. Replace your google maps directions api key in <a href="https://github.com/amanjeetsingh150/UberCarAnimation/blob/master/app/src/main/res/values/strings.xml">strings.xml</a> and google maps key in <a href="https://github.com/amanjeetsingh150/UberCarAnimation/blob/master/app/src/debug/res/values/google_maps_api.xml">google_maps_api.xml</a>. For convenience a TODO has been added there just follow them.
 <br><br>
+
+# Driver mode
+<img src="https://user-images.githubusercontent.com/12881364/45456295-d4f0b900-b707-11e8-8067-e1adb9c98716.gif" />
+The driver mode is the real world example of the situation where the driver app is communicating with user app and the car is animating accordingly.
+Here the <b>python script</b> is acting like a driver for the user app.
+
 
 # Developers
 <UL>
