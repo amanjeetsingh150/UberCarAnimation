@@ -2,7 +2,7 @@
 A demo application which demonstrates movement of car on map developed after inspiration from Uber.
 <br><br>
 # Demo
-<img src="https://user-images.githubusercontent.com/12881364/29244386-7f164cd6-7fd4-11e7-9d1a-13af7ee237ba.gif"/>
+<img src="https://user-images.githubusercontent.com/12881364/29244386-7f164cd6-7fd4-11e7-9d1a-13af7ee237ba.gif"/>&nbsp; &nbsp;<img scrc="https://user-images.githubusercontent.com/12881364/45456295-d4f0b900-b707-11e8-8067-e1adb9c98716.gif"/>
 <br>
 Youtube Link: https://www.youtube.com/watch?v=JIs4kLZ8qQI
 <br><br>
