@@ -1,9 +1,10 @@
 package com.developers.uberanimation;
 
 import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Handler;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -13,7 +14,6 @@ import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-
 import com.developers.uberanimation.models.Result;
 import com.developers.uberanimation.models.Route;
 import com.developers.uberanimation.models.events.BeginJourneyEvent;
@@ -34,11 +34,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.SquareCap;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import io.reactivex.Observer;
 import io.reactivex.SingleObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -47,13 +44,12 @@ import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
-
 import static com.google.android.gms.maps.model.JointType.ROUND;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private static final String TAG = MapsActivity.class.getSimpleName();
-    SupportMapFragment mapFragment;
+    private SupportMapFragment mapFragment;
     private GoogleMap mMap;
     private List<LatLng> polyLineList;
     private Marker marker;
@@ -71,6 +67,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Polyline blackPolyline, greyPolyLine;
     private ApiInterface apiInterface;
     private Disposable disposable;
+    private FloatingActionButton mDriverModeOpenFB;
 
 
     @Override
@@ -82,6 +79,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         linearLayout = findViewById(R.id.linearLayout);
         polyLineList = new ArrayList<>();
+        mDriverModeOpenFB = findViewById(R.id.switchToDriverMode);
         button = findViewById(R.id.destination_button);
         destinationEditText = findViewById(R.id.edittext_place);
         Retrofit retrofit = new Retrofit.Builder()
@@ -99,7 +97,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mapFragment.getMapAsync(MapsActivity.this);
             }
         });
+
+        mDriverModeOpenFB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(), DriverModeActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_in_right);
+            }
+        });
+
     }
+
 
     /**
      * Manipulates the map once available.
@@ -139,6 +148,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         new SingleObserver<Result>() {
+
                             @Override
                             public void onSubscribe(Disposable d) {
 
@@ -179,7 +189,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         } else if (o instanceof EndJourneyEvent) {
                             Snackbar.make(linearLayout, "Journey has ended",
                                     Snackbar.LENGTH_SHORT).show();
-                        } else if(o instanceof CurrentJourneyEvent){
+                        } else if (o instanceof CurrentJourneyEvent) {
                             /*
                              * This can be used to receive the current location update of the car
                              */

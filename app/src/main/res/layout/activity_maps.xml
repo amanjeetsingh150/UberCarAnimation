@@ -1,7 +1,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/linearLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/linearLayout"
     android:orientation="vertical">
 
     <LinearLayout
@@ -13,17 +13,27 @@
             android:id="@+id/edittext_place"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
+            android:layout_margin="5dp"
             android:layout_weight="5"
-            android:hint="Enter Place" />
+            android:hint="@string/enter_place_text" />
 
         <Button
             android:id="@+id/destination_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
             android:layout_marginTop="10dp"
             android:layout_weight="1"
-            android:text="GO" />
+            android:text="@string/go_button_text" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/switchToDriverMode"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginBottom="7dp"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:src="@drawable/ic_arrow_forward_white_48dp" />
     </LinearLayout>
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"

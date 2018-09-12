@@ -18,6 +18,11 @@ allprojects {
         jcenter()
         google()
     }
+    repositories {
+        maven {
+            url "https://repo.eclipse.org/content/repositories/paho-snapshots/"
+        }
+    }
 }
 
 task clean(type: Delete) {

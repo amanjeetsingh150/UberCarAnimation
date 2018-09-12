@@ -7,5 +7,9 @@
     <string name="button_text">GO</string>
     <string name="empty_error">Fields cannot be empty</string>
     <string name="internet_error">No Internet Connection!!</string>
+    <string name="enter_place_text">Enter Place</string>
+    <string name="go_button_text">GO</string>
+    <string name="driver_mode_text">Driver Mode</string>
+    <string name="title_activity_driver_mode">Map</string>
 </resources>
 
