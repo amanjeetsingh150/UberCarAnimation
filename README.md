@@ -91,7 +91,10 @@ The application uses <b>Google Maps Api Key</b> and <b>Google Map Directions key
 The driver mode is the real world example of the situation where the driver app is communicating with user app and the car is animating accordingly.
 Here the <b>python script</b> is acting like a driver for the user app.
 <br><br>
+
+
 # Explained Logic
+
 <UL>
 <LI>Establish a MQTT broker by logging into one of the MQTT providers. I used <a href="https://customer.cloudmqtt.com/login">CloudMQTT</a>.</LI>
 <LI>Create the instance for MQTT and generate credentials.</LI>
