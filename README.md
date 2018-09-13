@@ -90,7 +90,53 @@ The application uses <b>Google Maps Api Key</b> and <b>Google Map Directions key
 <img src="https://user-images.githubusercontent.com/12881364/45456295-d4f0b900-b707-11e8-8067-e1adb9c98716.gif" />
 The driver mode is the real world example of the situation where the driver app is communicating with user app and the car is animating accordingly.
 Here the <b>python script</b> is acting like a driver for the user app.
+<br><br>
+# Explained Logic
+<UL>
+<LI>Establish a MQTT broker by logging into one of the MQTT providers. I used <a href="https://customer.cloudmqtt.com/login">CloudMQTT</a>.</LI>
+<LI>Create the instance for MQTT and generate credentials.</LI>
+<LI>Integrate the <b>MQTT Paho Client</b> for android by including following in your app module <code>build.gradle</code>:
+<pre>
+implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.1.0'
+implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
+</pre>
+</LI>
+<LI>Fill your credentials in <code>MQTTHelper</code> class. The username, password and the server URI which is of form tcp://uri:port.</LI>
+<LI>Similarly add them in <code>UberMQTT.py</code> file.</LI>
+<LI>The Python script will be acting as driver and publishing the location on MQTT server in <b>flex interval</b> of 1 seconds using topic of <code>location/track</code>.
+The android app will connect to the broker and subscribe to the topic of kind <code>location/+</code>. As soon as the MQTT server receives the location it will push it to the android client.</LI>
+<LI>We will receive location in form of String which will be converted to LatLng type by function <code>convertStringToLatLng</code>.</LI>
+<LI>Then RxRelay is used to create stream of the LatLng's. Now as we need pair of LatLng for dispatching animation we will be taking <b>buffer</b> operator with count 2. This is shown below:
+In <code>messageReceived</code> callback:
+<pre>
+@Override
+public void messageArrived(String topic, MqttMessage message) throws Exception {
+ String payload = new String(message.getPayload());
+ LatLng currentLatLng = convertStringToLatLng(payload);
+ Log.d(TAG, topic + " " + currentLatLng);
+ latLngPublishRelay.accept(currentLatLng);
+}
+</pre>
+And subscribing to this relay with buffer 2:
+<pre>
+latLngPublishRelay
+   .buffer(2)
+   .subscribeOn(AndroidSchedulers.mainThread())
+   .subscribe(new Consumer<List<LatLng>>() {
 
+     @Override
+     public void accept(List<LatLng> latLngs) throws Exception {
+      emission++;
+      animateCarOnMap(latLngs);
+     }
+
+   });
+</pre>
+</LI>
+<LI>As soon as the Relay will emit two LatLng the <code>animateCarOnMap</code> function will dispatch animation through ValueAnimator. This animation will be based on same logic as was explained above.</LI>
+</UL>
+
+ 
 
 # Developers
 <UL>
