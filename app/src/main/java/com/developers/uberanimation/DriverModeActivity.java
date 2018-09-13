@@ -36,7 +36,7 @@ public class DriverModeActivity extends FragmentActivity implements OnMapReadyCa
     private static final String TAG = DriverModeActivity.class.getSimpleName();
 
     private GoogleMap mMap;
-    private PublishRelay<LatLng> latLngPublishSubject = PublishRelay.create();
+    private PublishRelay<LatLng> latLngPublishRelay = PublishRelay.create();
     private Disposable latLngDisposable;
     private Marker marker;
     private float v;
@@ -56,7 +56,7 @@ public class DriverModeActivity extends FragmentActivity implements OnMapReadyCa
     @Override
     protected void onResume() {
         super.onResume();
-        latLngDisposable = latLngPublishSubject
+        latLngDisposable = latLngPublishRelay
                 .buffer(2)
                 .subscribeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<List<LatLng>>() {
@@ -77,6 +77,12 @@ public class DriverModeActivity extends FragmentActivity implements OnMapReadyCa
         }
     }
 
+    /**
+     * Take the emissions from the Rx Relay as a pair of LatLng and starts the animation of
+     * car on map by taking the 2 pair of LatLng's.
+     *
+     * @param latLngs List of LatLng emitted by Rx Relay with size two.
+     */
     private void animateCarOnMap(final List<LatLng> latLngs) {
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         for (LatLng latLng : latLngs) {
@@ -114,6 +120,9 @@ public class DriverModeActivity extends FragmentActivity implements OnMapReadyCa
         valueAnimator.start();
     }
 
+    /**
+     * Initialize the MQTT helper to connect to the broker and subscribe to the topic
+     */
     private void startMqtt() {
         MQTTHelper mqttHelper = new MQTTHelper(getApplicationContext());
         mqttHelper.setCallback(new MqttCallbackExtended() {
@@ -133,7 +142,7 @@ public class DriverModeActivity extends FragmentActivity implements OnMapReadyCa
                 String payload = new String(message.getPayload());
                 LatLng currentLatLng = convertStringToLatLng(payload);
                 Log.d(TAG, topic + " " + currentLatLng);
-                latLngPublishSubject.accept(currentLatLng);
+                latLngPublishRelay.accept(currentLatLng);
             }
 
             @Override
@@ -163,6 +172,12 @@ public class DriverModeActivity extends FragmentActivity implements OnMapReadyCa
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 
+    /**
+     * Converts the LatLng string as (28.612, 77.6545) to LatLng type.
+     *
+     * @param latLngPair String representing latitude and longitude pair of form (28.612, 77.6545).
+     * @return The LatLng type of the string.
+     */
     private LatLng convertStringToLatLng(String latLngPair) {
         String[] latLng = latLngPair.split(",");
         double latitude = Double.parseDouble(latLng[0].substring(1, latLng[0].length()));
@@ -176,6 +191,13 @@ public class DriverModeActivity extends FragmentActivity implements OnMapReadyCa
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_in_right);
     }
 
+    /**
+     * Bearing between two LatLng pair
+     *
+     * @param begin First LatLng Pair
+     * @param end Second LatLng Pair
+     * @return The bearing or the angle at which the marker should rotate for going to {@code end} LAtLng.
+     */
     private float getBearing(LatLng begin, LatLng end) {
         double lat = Math.abs(begin.latitude - end.latitude);
         double lng = Math.abs(begin.longitude - end.longitude);
