@@ -127,7 +127,7 @@ And subscribing to this relay with buffer 2:
 <pre>
 latLngPublishRelay
    .buffer(2)
-   .subscribeOn(AndroidSchedulers.mainThread())
+   .observeOn(AndroidSchedulers.mainThread())
    .subscribe(new Consumer<List<LatLng>>() {
 
      @Override
