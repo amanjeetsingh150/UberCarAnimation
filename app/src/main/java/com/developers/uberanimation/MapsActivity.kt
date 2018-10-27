@@ -52,11 +52,11 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
   private val polyLineList = mutableListOf<LatLng>()
   private val sydney       = LatLng(28.671246, 77.317654)
+  private val disposable   = CompositeDisposable()
 
   // These are still mutable, use with precaution.
   private lateinit var googleMap: GoogleMap
   private lateinit var destination: String
-  private lateinit var disposable: CompositeDisposable
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
