@@ -1,15 +1,20 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 28
 
     defaultConfig {
         applicationId "com.developers.uberanimation"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "BASE_URL", "\"https://maps.googleapis.com/\""
+        buildConfigField "String", "GOOGLE_DIRECTIONS_KEY", GOOGLE_DIRECTIONS_KEY
     }
 
     buildTypes {
@@ -25,6 +30,9 @@ dependencies {
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+
+    // Kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Support
     implementation 'com.android.support:appcompat-v7:28.0.0'
