@@ -80,7 +80,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
      * This is an event bus for receiving journey events this can be shifted anywhere in code.
      * Do remember to dispose when not in use. For eg. its necessary to dispose it in onStop as activity is not visible.
      */
-    disposable.add(JourneyEventBus.getInstance().onJourneyEvent
+    disposable.add(JourneyEventBus.instance.onJourneyEvent
         .subscribeOn(AndroidSchedulers.mainThread())
         .subscribe { o ->
           when (o) {
@@ -236,14 +236,14 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         if (index == 0) {
           val beginJourneyEvent = BeginJourneyEvent()
           beginJourneyEvent.beginLatLng = startPosition
-          JourneyEventBus.getInstance().setOnJourneyBegin(beginJourneyEvent)
+          JourneyEventBus.instance.setOnJourneyBegin(beginJourneyEvent)
         }
 
         if (index == polyLineList.size - 1) {
           val endJourneyEvent = EndJourneyEvent()
           endJourneyEvent.endJourneyLatLng = LatLng(polyLineList[index].latitude,
               polyLineList[index].longitude)
-          JourneyEventBus.getInstance().setOnJourneyEnd(endJourneyEvent)
+          JourneyEventBus.instance.setOnJourneyEnd(endJourneyEvent)
         }
 
         val valueAnimator = ValueAnimator.ofFloat(0F, 1F).apply {
@@ -256,7 +256,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             val updatedPosition = LatLng(lat, lng)
             val currentJourneyEvent = CurrentJourneyEvent()
             currentJourneyEvent.currentLatLng = updatedPosition
-            JourneyEventBus.getInstance().setOnJourneyUpdate(currentJourneyEvent)
+            JourneyEventBus.instance.setOnJourneyUpdate(currentJourneyEvent)
             with (marker) {
               position = updatedPosition
               setAnchor(0.5f, 0.5f)
