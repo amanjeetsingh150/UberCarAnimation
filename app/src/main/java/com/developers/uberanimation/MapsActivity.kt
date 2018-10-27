@@ -241,7 +241,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
         if (index == polyLineList.size - 1) {
           val endJourneyEvent = EndJourneyEvent()
-          endJourneyEvent.endJourneyLatLng = LatLng(polyLineList[index].latitude,
+          endJourneyEvent.endLatLng = LatLng(polyLineList[index].latitude,
               polyLineList[index].longitude)
           JourneyEventBus.instance.setOnJourneyEnd(endJourneyEvent)
         }
