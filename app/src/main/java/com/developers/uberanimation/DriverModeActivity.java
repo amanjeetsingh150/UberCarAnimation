@@ -2,6 +2,8 @@ package com.developers.uberanimation;
 
 
 import android.animation.ValueAnimator;
+import android.content.Context;
+import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,6 +34,12 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 
 public class DriverModeActivity extends FragmentActivity implements OnMapReadyCallback {
+    public static Intent start(Context context) {
+        Intent intent = new Intent(context, DriverModeActivity.class);
+        context.startActivity(intent);
+
+        return intent;
+    }
 
     private static final String TAG = DriverModeActivity.class.getSimpleName();
 
