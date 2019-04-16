@@ -1,0 +1,44 @@
+public class GoogleMapUtil {
+
+public static double computeHeading(LatLng from, LatLng to) {
+        double fromLat = Math.toRadians(from.latitude);
+        double fromLng = Math.toRadians(from.longitude);
+        double toLat = Math.toRadians(to.latitude);
+        double toLng = Math.toRadians(to.longitude);
+        double dLng = toLng - fromLng;
+        double heading = Math.atan2(Math.sin(dLng) * Math.cos(toLat), Math.cos(fromLat) * Math.sin(toLat) - Math.sin(fromLat) * Math.cos(toLat) * Math.cos(dLng));
+        return MathUtil.wrap(Math.toDegrees(heading), -180.0D, 180.0D);
+    }
+
+public static LatLng interpolate(LatLng from, LatLng to, double fraction) {
+        double fromLat = Math.toRadians(from.latitude);
+        double fromLng = Math.toRadians(from.longitude);
+        double toLat = Math.toRadians(to.latitude);
+        double toLng = Math.toRadians(to.longitude);
+        double cosFromLat = Math.cos(fromLat);
+        double cosToLat = Math.cos(toLat);
+        double angle = computeAngleBetween(from, to);
+        double sinAngle = Math.sin(angle);
+        if (sinAngle < 1.0E-6D) {
+            return from;
+        } else {
+            double a = Math.sin((1.0D - fraction) * angle) / sinAngle;
+            double b = Math.sin(fraction * angle) / sinAngle;
+            double x = a * cosFromLat * Math.cos(fromLng) + b * cosToLat * Math.cos(toLng);
+            double y = a * cosFromLat * Math.sin(fromLng) + b * cosToLat * Math.sin(toLng);
+            double z = a * Math.sin(fromLat) + b * Math.sin(toLat);
+            double lat = Math.atan2(z, Math.sqrt(x * x + y * y));
+            double lng = Math.atan2(y, x);
+            return new LatLng(Math.toDegrees(lat), Math.toDegrees(lng));
+        }
+    }
+    
+    private static double distanceRadians(double lat1, double lng1, double lat2, double lng2) {
+        return MathUtil.arcHav(MathUtil.havDistance(lat1, lat2, lng1 - lng2));
+    }
+
+    static double computeAngleBetween(LatLng from, LatLng to) {
+        return distanceRadians(Math.toRadians(from.latitude), Math.toRadians(from.longitude), Math.toRadians(to.latitude), Math.toRadians(to.longitude));
+    }
+
+}
