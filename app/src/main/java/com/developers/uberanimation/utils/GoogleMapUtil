@@ -1,3 +1,5 @@
+package com.developers.uberanimation.utils;
+
 public class GoogleMapUtil {
 
 public static double computeHeading(LatLng from, LatLng to) {
