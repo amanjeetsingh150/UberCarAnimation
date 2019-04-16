@@ -281,23 +281,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     JourneyEventBus.getInstance().setOnJourneyEnd(endJourneyEvent);
                 }
                 ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
-                valueAnimator.setDuration(3000);
+                valueAnimator.setDuration(2000);
                 valueAnimator.setInterpolator(new LinearInterpolator());
                 valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     @Override
                     public void onAnimationUpdate(ValueAnimator valueAnimator) {
                         v = valueAnimator.getAnimatedFraction();
-                        lng = v * endPosition.longitude + (1 - v)
-                                * startPosition.longitude;
-                        lat = v * endPosition.latitude + (1 - v)
-                                * startPosition.latitude;
-                        LatLng newPos = new LatLng(lat, lng);
+                        
+//                         lng = v * endPosition.longitude + (1 - v)
+//                                 * startPosition.longitude;
+//                         lat = v * endPosition.latitude + (1 - v)
+//                                 * startPosition.latitude;
+                        
+                        LatLng newPos = GoogleMapUtil.interpolate(startPosition, endPosition, v);
+                        
+//                         LatLng newPos = new LatLng(lat, lng);
                         CurrentJourneyEvent currentJourneyEvent = new CurrentJourneyEvent();
                         currentJourneyEvent.setCurrentLatLng(newPos);
                         JourneyEventBus.getInstance().setOnJourneyUpdate(currentJourneyEvent);
                         marker.setPosition(newPos);
                         marker.setAnchor(0.5f, 0.5f);
-                        marker.setRotation(getBearing(startPosition, newPos));
+//                         marker.setRotation(getBearing(startPosition, newPos));
+                        marker.setRotation(GoogleUtil.computeHeading(startPosition, endPosition);
                         mMap.animateCamera(CameraUpdateFactory.newCameraPosition
                                 (new CameraPosition.Builder().target(newPos)
                                         .zoom(15.5f).build()));
@@ -311,38 +316,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }, 3000);
     }
 
+    public List<LatLng> decode(String encodedPath) {
+        int len = encodedPath.length();
+        List<LatLng> path = new ArrayList();
+        int index = 0;
+        int lat = 0;
+        int lng = 0;
 
-    private List<LatLng> decodePoly(String encoded) {
-        List<LatLng> poly = new ArrayList<>();
-        int index = 0, len = encoded.length();
-        int lat = 0, lng = 0;
+        while(index < len) {
+            int result = 1;
+            int shift = 0;
 
-        while (index < len) {
-            int b, shift = 0, result = 0;
+            int b;
             do {
-                b = encoded.charAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
+                b = encodedPath.charAt(index++) - 63 - 1;
+                result += b << shift;
                 shift += 5;
-            } while (b >= 0x20);
-            int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lat += dlat;
+            } while(b >= 31);
 
+            lat += (result & 1) != 0 ? ~(result >> 1) : result >> 1;
+            result = 1;
             shift = 0;
-            result = 0;
-            do {
-                b = encoded.charAt(index++) - 63;
-                result |= (b & 0x1f) << shift;
-                shift += 5;
-            } while (b >= 0x20);
-            int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-            lng += dlng;
 
-            LatLng p = new LatLng((((double) lat / 1E5)),
-                    (((double) lng / 1E5)));
-            poly.add(p);
+            do {
+                b = encodedPath.charAt(index++) - 63 - 1;
+                result += b << shift;
+                shift += 5;
+            } while(b >= 31);
+
+            lng += (result & 1) != 0 ? ~(result >> 1) : result >> 1;
+            path.add(new LatLng((double)lat * 1.0E-5D, (double)lng * 1.0E-5D));
         }
 
-        return poly;
+        return path;
     }
 
     private float getBearing(LatLng begin, LatLng end) {
